@@ -61,6 +61,7 @@ namespace OpenZWave
 		friend class Node;
 		friend class Group;
 		friend class CommandClass;
+		friend class SensorBinary;
 		friend class ControllerReplication;
 		friend class Value;
 		friend class ValueStore;

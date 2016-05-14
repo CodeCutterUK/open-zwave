@@ -35,6 +35,7 @@
 #include "platform/Log.h"
 #include "value_classes/ValueBool.h"
 #include "tinyxml.h"
+#include "Manager.h"
 
 using namespace OpenZWave;
 
@@ -167,10 +168,20 @@ bool SensorBinary::HandleMsg
 	    if( _length > 2 )
 	    {
 	        uint8 index = m_sensorsMap[_data[2]];
+			uint8 sensor = _data[2];
+			uint16 manufacturerId = GetDriver()->GetNodeManufacturerId( GetNodeId() );
+			uint16 productId = GetDriver()->GetNodeProductId( GetNodeId() );
 
-            Log::Write( LogLevel_Info, GetNodeId(), "Received SensorBinary report: Sensor:%d State=%s", _data[2], _data[1] ? "On" : "Off" );
+            Log::Write( LogLevel_Info, GetNodeId(), "Received SensorBinary report: Instance:%d Sensor:%d State=%s", _instance, _data[2], _data[1] ? "On" : "Off" );
 
-            if( ValueBool* value = static_cast<ValueBool*>( GetValue( _instance, index ) ) )
+			// Qubino ZMNHDD1 Flush Dimmer
+			// Request Values for I2 && I3 whenever the Binary Sensor event is received
+			if((manufacturerId == 0x0159 && productId == 0x51) && (sensor == 32 || sensor == 223))
+			{
+				RequestValue(0, 0, 1, Driver::MsgQueue_Send);
+				RequestValue(0, 0, 2, Driver::MsgQueue_Send);
+			}
+            else if( ValueBool* value = static_cast<ValueBool*>( GetValue( _instance, index ) ) )
             {
                 value->OnValueRefreshed( _data[1] != 0 );
                 value->Release();
@@ -180,7 +191,7 @@ bool SensorBinary::HandleMsg
 	    }
 	    else
 	    {
-            Log::Write( LogLevel_Info, GetNodeId(), "Received SensorBinary report: State=%s", _data[1] ? "On" : "Off" );
+            Log::Write( LogLevel_Info, GetNodeId(), "Received SensorBinary report: Instance:%d State=%s", _instance, _data[1] ? "On" : "Off" );
 
             if( ValueBool* value = static_cast<ValueBool*>( GetValue( _instance, 0 ) ) )
             {
