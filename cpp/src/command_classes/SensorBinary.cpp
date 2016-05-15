@@ -171,12 +171,14 @@ bool SensorBinary::HandleMsg
 			uint8 sensor = _data[2];
 			uint16 manufacturerId = GetDriver()->GetNodeManufacturerId( GetNodeId() );
 			uint16 productId = GetDriver()->GetNodeProductId( GetNodeId() );
+			uint16 productTypeId = GetDriver()->GetNodeProductType( GetNodeId() );
 
             Log::Write( LogLevel_Info, GetNodeId(), "Received SensorBinary report: Instance:%d Sensor:%d State=%s", _instance, _data[2], _data[1] ? "On" : "Off" );
 
-			// Qubino ZMNHDD1 Flush Dimmer
+			// Qubino ZMNHDDx Flush Dimmer || Qubino ZMNHADx Flush 1 Relay
 			// Request Values for I2 && I3 whenever the Binary Sensor event is received
-			if((manufacturerId == 0x0159 && productId == 0x51) && (sensor == 32 || sensor == 223))
+			if(((manufacturerId == 0x0159 && productId == 0x51 && productTypeId == 0x01) && (sensor == 32 || sensor == 223)) ||
+			   ((manufacturerId == 0x0159 && productId == 0x52 && productTypeId == 0x02) && (sensor == 29 || sensor == 226)) )
 			{
 				RequestValue(0, 0, 1, Driver::MsgQueue_Send);
 				RequestValue(0, 0, 2, Driver::MsgQueue_Send);
